@@ -9,6 +9,7 @@ class GalleryController extends GetxController {
   final ScrollController scrollController = ScrollController();
   final GalleryListState galleryListStatus = GalleryListState();
   int pageIndex = 1;
+  int total = 0;
 
   @override
   void onInit() {
@@ -30,7 +31,10 @@ class GalleryController extends GetxController {
 
   void scrollListener() {
     if (!galleryListStatus.isLoading.value) {
-      if (!galleryListStatus.isLoadingMore.value && scrollController.offset >= scrollController.position.maxScrollExtent) {
+      if (!galleryListStatus.isLoadingMore.value &&
+          scrollController.offset >=
+              scrollController.position.maxScrollExtent &&
+          galleryList.length < total) {
         pageIndex += 1;
         getData(loadMore: true);
       }
@@ -41,10 +45,14 @@ class GalleryController extends GetxController {
     if (loadMore) {
       galleryListStatus.changeStatus(loadingMore: true, success: true);
     }
-    final response = await repository.getGalleryList(page: loadMore ? pageIndex : 1);
+    final response =
+        await repository.getGalleryList(page: loadMore ? pageIndex : 1);
     response.fold(
       (l) {
-        if (!loadMore) galleryList.clear();
+        if (!loadMore) {
+          total = l.total ?? 0;
+          galleryList.clear();
+        }
         galleryList.addAll(l.hits ?? <PictureData>[]);
         galleryListStatus.changeStatus(success: true);
       },
